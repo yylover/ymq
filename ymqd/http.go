@@ -3,6 +3,8 @@ package ymqd
 import (
 	"fmt"
 	"time"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 type HttpServer struct {
@@ -24,5 +26,6 @@ func NewHTTPServer() (*HttpServer, error) {
 
 func (h *HttpServer) init() error {
 	h.server.ListenAndServe()
+	router := httprouter.New()
 	fmt.Print("a")
 }

@@ -5,9 +5,11 @@ import (
 	"fmt"
 )
 
+// Ymqd
 type Ymqd struct {
 }
 
+// NewYmqd 创建新的服务器
 func NewYmqd() (*Ymqd, error) {
 	ymq := new(Ymqd)
 	return ymq, nil

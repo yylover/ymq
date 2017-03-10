@@ -1,6 +1,10 @@
 package ymqd
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+	"sync/atomic"
+)
 
 type Consumer interface {
 	Pause()
@@ -11,6 +15,7 @@ type Consumer interface {
 	TimedOutMessage()
 }
 
+//Channel
 type Channel struct {
 	messageCount uint64
 	timeoutCount uint64
@@ -41,4 +46,17 @@ func NewChannel(topicName, channelName string, ctx *context) (*Channel, error) {
 	}
 
 	return c, nil
+}
+
+func (c *Channel) ioLoop() {
+	for atomic.LoadInt32(&c.exitFlag) == 0 {
+		msg := <-c.memoryMsgChan
+
+		fmt.Printf("New Message%v\n", msg)
+	}
+}
+
+// 退出循环
+func (c *Channel) Exit() {
+	atomic.StoreInt32(&c.exitFlag, 1)
 }

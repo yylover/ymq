@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
+	"syscall"
 	"ymq/internal/app"
 	"ymq/internal/version"
 	"ymq/ymqd"
@@ -71,9 +73,17 @@ func main() {
 		}
 	}
 
+	s, _ := ymqd.NewHTTPServer(nil)
+	s.Serve() //等待http server //TODO 放到后台进行
+
 	fmt.Printf("options : %v\n", opts)
 	options.Resolve(opts, flagset, cfg)
 
 	fmt.Printf("options : %v\n", opts)
 	fmt.Printf("config:%v\n", cfg)
+	// Waiting exit signal
+	sigChan := make(chan os.Signal)
+	signal.Notify(sigChan, os.Interrupt)
+	signal.Notify(sigChan, syscall.SIGTERM)
+	<-sigChan
 }

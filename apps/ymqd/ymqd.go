@@ -67,20 +67,24 @@ func main() {
 	var cfg config
 	configFile := flagset.Lookup("config").Value.String()
 	if configFile != "" {
-		_, err := toml.DecodeFile(configFile, &cfg)
+		_, err = toml.DecodeFile(configFile, &cfg)
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
-
-	s, _ := ymqd.NewHTTPServer(nil)
-	s.Serve() //等待http server //TODO 放到后台进行
 
 	fmt.Printf("options : %v\n", opts)
 	options.Resolve(opts, flagset, cfg)
 
 	fmt.Printf("options : %v\n", opts)
 	fmt.Printf("config:%v\n", cfg)
+
+	app, err := ymqd.NewYmqd(opts)
+	if err != nil {
+		panic("create app failed :" + err.Error())
+	}
+	app.Main()
+
 	// Waiting exit signal
 	sigChan := make(chan os.Signal)
 	signal.Notify(sigChan, os.Interrupt)

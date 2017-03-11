@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sync"
 	"sync/atomic"
+	"time"
 	"ymq/internal/util"
 )
 
@@ -27,8 +28,9 @@ type Topic struct {
 	paused    int32 //暂停
 	pauseChan chan bool
 
-	logger Logger   //logger
-	ctx    *context //context
+	guidGenerator *guidFactory
+	logger        Logger   //logger
+	ctx           *context //context
 }
 
 // NewTopic 创建新的Topic
@@ -42,9 +44,10 @@ func NewTopic(ctx *context) (*Topic, error) {
 		exitFlag:      0,
 		ctx:           ctx,
 		logger:        &LoggerLocal{},
+		guidGenerator: newGUIDFactory(0),
 	}
 
-	topic.waitGroup.Warp(topic.messagePump)
+	topic.waitGroup.Wrap(topic.messagePump)
 
 	return topic, nil
 }
@@ -152,11 +155,6 @@ func (t *Topic) Close() error {
 	return nil
 }
 
-//
-func (t *Topic) exit(deleted bool) error {
-	return nil
-}
-
 // Empty 清空所有的Topic 数据
 func (t *Topic) Empty() error {
 	return nil
@@ -193,8 +191,16 @@ func (t *Topic) IsPaused() bool {
 	return atomic.LoadInt32(&t.paused) == 1
 }
 
-// GenerateID 生成id
-func (*Topic) GenerateID() MessageID {
-	// t := time.Nanosecond
-	return []byte("HELLOWORLDTESTY")
+// GenerateID 生成id,失败时尝试重新生成id
+func (t *Topic) GenerateID() MessageID {
+
+retry:
+	id, err := t.guidGenerator.NewGUID()
+	if err != nil {
+		t.logger.Output(2, err.Error())
+		time.Sleep(time.Microsecond)
+		goto retry
+	}
+
+	return id.Hex()
 }
